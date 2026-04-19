@@ -1,0 +1,19 @@
+{
+  "name": "Графопостроитель Pro",
+  "short_name": "f(x) Pro",
+  "description": "Профессиональный построитель графиков функций с поиском пересечений",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#667eea",
+  "theme_color": "#667eea",
+  "orientation": "any",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23667eea' rx='100'/%3E%3Ctext x='256' y='350' font-family='Arial' font-size='200' font-weight='bold' fill='white' text-anchor='middle'%3Ef(x)%3C/text%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

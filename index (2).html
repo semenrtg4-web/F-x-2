@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Графики · f(x)</title>
+  
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#6366f1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.2.0/dist/chartjs-plugin-zoom.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      background: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      font-family: 'Inter', sans-serif;
+    }
+    
+    body.dark { background: #0f172a; }
+    body.dark .app { background: #1e293b; }
+    body.dark input, body.dark .func-btn { background: #334155; border-color: #475569; color: #e2e8f0; }
+    
+    .app {
+      max-width: 1200px;
+      width: 100%;
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      padding: 20px;
+    }
+    
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #1e293b;
+    }
+    
+    body.dark h1 { color: #e2e8f0; }
+    
+    .input-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    
+    input {
+      flex: 1;
+      padding: 14px 18px;
+      border: 2px solid #e2e8f0;
+      border-radius: 60px;
+      font-size: 1rem;
+      font-family: monospace;
+      background: white;
+      outline: none;
+    }
+    
+    input:focus { border-color: #6366f1; }
+    
+    button {
+      padding: 14px 24px;
+      background: #6366f1;
+      color: white;
+      border: none;
+      border-radius: 60px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    
+    button:hover { background: #4f46e5; }
+    
+    .func-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    
+    .func-btn {
+      padding: 8px 14px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      font-family: monospace;
+      cursor: pointer;
+      color: #1e293b;
+    }
+    
+    .func-btn:hover {
+      background: #6366f1;
+      color: white;
+    }
+    
+    .chart-box {
+      background: #fafafa;
+      border-radius: 20px;
+      padding: 12px;
+      border: 1px solid #e2e8f0;
+      margin-bottom: 12px;
+    }
+    
+    body.dark .chart-box { background: #0f172a; border-color: #334155; }
+    
+    canvas {
+      display: block;
+      width: 100% !important;
+      height: auto !important;
+      max-height: 400px;
+      cursor: grab;
+    }
+    
+    .controls {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    
+    .result {
+      margin-top: 12px;
+      padding: 10px 16px;
+      background: #f1f5f9;
+      border-radius: 30px;
+      font-size: 0.9rem;
+      display: none;
+    }
+    
+    .result.show { display: block; }
+    body.dark .result { background: #334155; }
+    
+    .theme-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 50px;
+      height: 50px;
+      border-radius: 50px;
+      background: #6366f1;
+      color: white;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <h1>📈 Построение графиков</h1>
+  
+  <div class="input-row">
+    <input type="text" id="func1Input" placeholder="f₁(x) = например: Math.sin(x)" value="Math.sin(x)">
+    <button id="plotBtn">Построить</button>
+  </div>
+  
+  <div class="input-row">
+    <input type="text" id="func2Input" placeholder="f₂(x) = например: Math.cos(x)">
+    <button id="clearBtn">Очистить 2</button>
+  </div>
+  
+  <div class="func-buttons">
+    <button class="func-btn" data-func="x ** 2">x²</button>
+    <button class="func-btn" data-func="x ** 3">x³</button>
+    <button class="func-btn" data-func="Math.sin(x)">sin(x)</button>
+    <button class="func-btn" data-func="Math.cos(x)">cos(x)</button>
+    <button class="func-btn" data-func="Math.sqrt(Math.abs(x))">√|x|</button>
+    <button class="func-btn" data-func="Math.exp(x)">eˣ</button>
+    <button class="func-btn" data-func="Math.tan(x)">tan(x)</button>
+    <button class="func-btn" data-func="Math.log(Math.abs(x))">ln|x|</button>
+  </div>
+  
+  <div class="chart-box">
+    <canvas id="myChart"></canvas>
+  </div>
+  
+  <div class="controls">
+    <button id="zoomIn">🔍+</button>
+    <button id="zoomOut">🔍−</button>
+    <button id="resetZoom">🔄 Сброс</button>
+    <button id="findRoots">🎯 Корни</button>
+    <button id="exportPNG">⬇️ PNG</button>
+  </div>
+  
+  <div class="result" id="result"></div>
+</div>
+
+<button class="theme-btn" id="themeToggle">🌙</button>
+
+<script>
+  // Service Worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+  }
+  
+  // Создаём график
+  const ctx = document.getElementById('myChart').getContext('2d');
+  
+  const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      datasets: [
+        { label: 'f₁(x)', data: [], borderColor: '#6366f1', borderWidth: 3, pointRadius: 0, tension: 0.2 },
+        { label: 'f₂(x)', data: [], borderColor: '#ef4444', borderWidth: 2, pointRadius: 0, tension: 0.2, borderDash: [8, 4] }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      animation: false,
+      plugins: {
+        zoom: {
+          pan: { enabled: true, mode: 'xy' },
+          zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'xy' }
+        }
+      },
+      scales: {
+        x: { type: 'linear', min: -6, max: 6, grid: { color: '#ddd' } },
+        y: { type: 'linear', grid: { color: '#ddd' } }
+      }
+    }
+  });
+  
+  // Функция вычисления (ПОЛНОСТЬЮ РАБОЧАЯ)
+  function calculate(expr, x) {
+    // Заменяем ^ на ** для удобства
+    expr = expr.replace(/\^/g, '**');
+    
+    try {
+      // Создаём функцию с доступом к Math
+      const fn = new Function('x', `
+        const { sin, cos, tan, sqrt, abs, exp, log, PI, E } = Math;
+        try {
+          return ${expr};
+        } catch(e) {
+          return NaN;
+        }
+      `);
+      return fn(x);
+    } catch(e) {
+      console.error('Ошибка в выражении:', expr, e);
+      return NaN;
+    }
+  }
+  
+  // Построение графика
+  function plot() {
+    const func1 = document.getElementById('func1Input').value.trim();
+    const func2 = document.getElementById('func2Input').value.trim();
+    
+    const data1 = [];
+    const data2 = [];
+    
+    // Генерируем точки
+    for (let x = -10; x <= 10; x += 0.1) {
+      // Функция 1
+      let y1 = calculate(func1, x);
+      if (isNaN(y1) || !isFinite(y1) || Math.abs(y1) > 100) y1 = null;
+      data1.push({ x: x, y: y1 });
+      
+      // Функция 2 (если есть)
+      if (func2) {
+        let y2 = calculate(func2, x);
+        if (isNaN(y2) || !isFinite(y2) || Math.abs(y2) > 100) y2 = null;
+        data2.push({ x: x, y: y2 });
+      }
+    }
+    
+    // Обновляем данные
+    chart.data.datasets[0].data = data1;
+    chart.data.datasets[0].label = func1 || 'f₁(x)';
+    
+    if (func2) {
+      chart.data.datasets[1].data = data2;
+      chart.data.datasets[1].label = func2;
+      chart.data.datasets[1].hidden = false;
+    } else {
+      chart.data.datasets[1].hidden = true;
+    }
+    
+    chart.update();
+  }
+  
+  // Показать результат
+  function showResult(text) {
+    const resultDiv = document.getElementById('result');
+    resultDiv.textContent = text;
+    resultDiv.classList.add('show');
+    setTimeout(() => resultDiv.classList.remove('show'), 4000);
+  }
+  
+  // Обработчики событий
+  document.getElementById('plotBtn').addEventListener('click', plot);
+  
+  document.getElementById('clearBtn').addEventListener('click', () => {
+    document.getElementById('func2Input').value = '';
+    plot();
+  });
+  
+  // Быстрые функции
+  document.querySelectorAll('.func-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('func1Input').value = btn.dataset.func;
+      plot();
+    });
+  });
+  
+  // Enter в полях ввода
+  ['func1Input', 'func2Input'].forEach(id => {
+    document.getElementById(id).addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') plot();
+    });
+  });
+  
+  // Зум
+  document.getElementById('zoomIn').addEventListener('click', () => chart.zoom(1.2));
+  document.getElementById('zoomOut').addEventListener('click', () => chart.zoom(0.8));
+  document.getElementById('resetZoom').addEventListener('click', () => chart.resetZoom());
+  
+  // Тема
+  document.getElementById('themeToggle').addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+    document.getElementById('themeToggle').textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+  });
+  
+  // Экспорт
+  document.getElementById('exportPNG').addEventListener('click', () => {
+    const link = document.createElement('a');
+    link.download = 'graph.png';
+    link.href = document.getElementById('myChart').toDataURL();
+    link.click();
+  });
+  
+  // Поиск корней
+  document.getElementById('findRoots').addEventListener('click', () => {
+    const data = chart.data.datasets[0].data;
+    const roots = [];
+    
+    for (let i = 1; i < data.length; i++) {
+      const prev = data[i-1], curr = data[i];
+      if (prev.y !== null && curr.y !== null && prev.y * curr.y <= 0) {
+        const rootX = prev.x - prev.y * (curr.x - prev.x) / (curr.y - prev.y);
+        roots.push(rootX.toFixed(3));
+      }
+    }
+    
+    if (roots.length) {
+      showResult(`🎯 Корни: x = ${[...new Set(roots)].join(', ')}`);
+    } else {
+      showResult('Корней не найдено');
+    }
+  });
+  
+  // Запуск
+  plot();
+</script>
+</body>
+</html>
